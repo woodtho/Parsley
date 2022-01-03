@@ -1,6 +1,7 @@
 library(tidyverse)
 library(shiny)
 library(janitor)
+library(readxl)
 
 Scores <- read_excel("Data/Scores.xlsx", sheet = "Score") %>% 
     mutate(label = if_else(level == 1, name, type) %>% 
@@ -12,7 +13,15 @@ width_sidebar <- 3
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(# Application title
-    titlePanel("Parsley Score"),
+    titlePanel("Parsley Score", class = "container"),
+    
+    tags$head(
+        tags$link(rel = "stylesheet", type = "text/css", href = "css/bootstrap.min.css"),
+        tags$link(rel = "stylesheet", type = "text/css", href = "css/bootstrap-grid.min.css"),
+        tags$link(rel = "stylesheet", type = "text/css", href = "css/bootstrap-reboot.min.css"),
+        tags$script(type = "text/javascript", href = "js/bootstrap.bundle.min.js"),
+        tags$script(type = "text/javascript", href = "js/bootstrap.min.js")
+    ),
     
     # Sidebar with a slider input for number of bins
     sidebarLayout(
