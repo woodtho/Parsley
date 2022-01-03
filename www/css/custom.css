@@ -6,16 +6,18 @@
 
 
 body > div.container-fluid > div > div.col-sm-4 > form {
- min-height: 20px;
+    min-height: 20px;
     background-color: #bbbbbb!important;
-    border-radius: 4px;
+    border-radius: 0px;
     display: block;
-    padding: 10px 15px;
+    padding: 25px 30px;
     margin: 10px 5px;
     margin-left: -5px;
-    border: 2px solid #000000;
-    box-shadow: 0 0 0 5px, 11px 13px 0 4px black;
+    border: 2px solid #bbbbbb!important;
+    box-shadow: 0 0 0 0px, 11px 13px 0 0px black;
     color: black;
+    outline: 4px solid black;
+    outline-offset: -15px;
 }
 
 .table {
@@ -115,3 +117,9 @@ input[type="checkbox"] {
       filter: hue-rotate(320deg) brightness(1.08);
     box-shadow: 0 0 0 0px, 1px 1px 0 1px black;
 }
+
+.table > thead > tr > th:nth-child(2){
+  
+  width: 100px;
+}
+

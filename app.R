@@ -2,18 +2,22 @@ library(tidyverse)
 library(shiny)
 library(janitor)
 library(readxl)
+library(scales)
 
-Scores <- read_excel("Data/Scores.xlsx", sheet = "Score") %>% 
-    mutate(label = if_else(level == 1, name, type) %>% 
-               str_to_title() %>% 
-               fct_inorder()) %>% 
-    rownames_to_column() %>% 
-    group_by(game, type) %>% 
-    mutate(n = n(), 
-           game = fct_inorder(game)) %>% 
+Scores <- read_excel("Data/Scores.xlsx", sheet = "Score") %>%
+    mutate(
+        label = if_else(level == 1, name, type) %>%
+            str_to_title() %>%
+            fct_inorder(),
+        value = if_else(value == "Inf", Inf, parse_number(value))
+    ) %>%
+    rownames_to_column() %>%
+    group_by(game, type) %>%
+    mutate(n = n(),
+           game = fct_inorder(game)) %>%
     arrange(game,-n)
 
-Inventory <- read_excel("Data/Scores.xlsx", sheet = "Inventory") 
+Inventory <- read_excel("Data/Scores.xlsx", sheet = "Inventory")
 
 width_sidebar <- 4
 
@@ -41,24 +45,30 @@ ui <- fluidPage(# Application title
         tags$script(type = "text/javascript", href = "js/toast.js"),
         tags$script(type = "text/javascript", href = "js/tooltip.js"),
         tags$script(type = "text/javascript", href = "js/util.js")
-    ),
+    ), 
     
     # Sidebar with a slider input for number of bins
     sidebarLayout(
         sidebarPanel(
-            width = width_sidebar,
+            width = width_sidebar, 
+            div(
+            style = "max-height: 720px; position:relative; overflow-y: scroll; padding-right: 10px;",
+            h4("Select game", style = "color:black;"),
             selectInput(
                 "game",
-                "Select game:",
+                NULL,
                 choices = unique(Scores$game),
-                multiple = FALSE),
-            h4(strong("Inventory"), style = "color:black;"),
+                multiple = FALSE
+            ),
+            h4("Inventory", style = "color:black;"),
             uiOutput("inventory"),
             br(),
-            h4(strong("Score Summary"), style = "color:black;"),
-            tableOutput('show_inputs')),
-        # Show a plot of the generated distribution
-        mainPanel(uiOutput("score"))
+            h4("Score Summary", style = "color:black;"),
+            div(style = "padding-right: 10px;",
+            uiOutput('show_inputs'))
+        )),
+        mainPanel(div(style = "max-height: 780px; position:relative; overflow-y: scroll; padding-right: 10px;",
+                      uiOutput("score")))
     ))
 
 # Define server logic required to draw a histogram
@@ -76,54 +86,121 @@ server <- function(input, output) {
     })
 
     output$score <- renderUI({
-        map(unique(score_items()$type), function(.x) {
-            ids <- filter(score_items(), type == .x) %>%
-                pull(id) %>%
-                list(id = ., type = rep(.x, times = length(.)))
+        
+        map(unique(score_items()$score_set), function(.x) {
             
-            tagList(column(
-                width = 5,
-                #     floor(length(unique(
-                #     Scores$type
-                # )) / (11 - width_sidebar) * 11),
-                h1(str_to_title(.x)),
-                map(
-                    ids$id,
-                    .f = ~ checkboxInput(
-                        paste0("score_",str_replace_all(input$game, " |-", "_"),"_", .x),
-                        label = pull(score_items()[score_items()$id == .x, "name"]),
-                        value = FALSE
+            .data <- filter(score_items(), score_set == .x)
+            .score_set <- .x
+            
+            tagList(fluidRow(column(12, h1(
+                str_to_title(.score_set)
+            ))),
+            fluidRow(map(unique(.data$type), function(.x, ...) {
+                ids <- filter(.data, type == .x) %>%
+                    pull(id) %>%
+                    list(id = ., type = rep(.x, times = length(.)))
+                tagList(column(
+                    width = 5,
+                    h3(str_to_title(.x)),
+                    map(
+                        ids$id,
+                        .f = ~ checkboxInput(
+                            paste0(
+                                str_replace_all(.score_set, " |-", "_"),
+                                "_score_",
+                                str_replace_all(input$game, " |-", "_"),
+                                "_",
+                                .x
+                            ),
+                            label = pull(score_items()[score_items()$id == .x, "name"]),
+                            value = FALSE
+                        )
                     )
-                )
-            ))
+                ))
+            }, .data, .score_set)))
+            
         })
-        
-        
     })
     
     
     AllInputs <- reactive({
         x <- reactiveValuesToList(input)
         data.frame(names = names(x),
-                   values = unlist(x, use.names = FALSE) %>% parse_logical()) %>% 
-            filter(str_detect(names, paste0("^score_", str_replace_all(input$game, " |-", "_"), "_[0-9]"))) %>% 
-            mutate(id = parse_number(names)) %>%
+                   values = unlist(x, use.names = FALSE) %>% parse_logical()) %>%
+            filter(str_detect(names, paste0(
+                "score_", str_replace_all(input$game, " |-", "_"), "_[0-9]"
+            ))) %>%
+            mutate(
+                id = parse_number(names),
+                score_set = str_extract(names, ".+?(?=_score)") %>% str_replace_all("_", " ")
+            ) %>%
             left_join(Scores) %>%
-            group_by(label) %>%
+            group_by(score_set, label) %>%
             summarize(Score = sum(values * value, na.rm = TRUE),
-                      rowname = max(rowname)) %>%
-            adorn_totals() %>% 
-            mutate(Score = scales::comma(Score, accuracy = 1, suffix = " points"),
-                   rowname = parse_number(rowname)) %>% 
-            arrange(rowname) %>% 
-            rename(` ` = label) %>% 
-            select(-rowname)
+                      rowname = max(rowname))
     })
+
     
-    output$show_inputs <- renderTable({
-        AllInputs()
+    output$show_inputs <- renderUI({
+        tagList(map(unique(AllInputs()$score_set), ~
+                        renderTable(width = "100%", {
+                            AllInputs() %>%
+                                filter(score_set == .x) %>%
+                                ungroup() %>%
+                                select(-score_set) %>%
+                                {if(all(is.finite(.$Score))) {
+                                    adorn_totals(dat = .) %>% 
+                                        mutate(Score = comma(Score, accuracy = 1, suffix = " points"), 
+                                               rowname = parse_number(rowname))
+                                    } else {
+                                        a <- . 
+                                        
+                                        b <- a %>% 
+                                            filter(is.finite(Score)) %>% 
+                                            adorn_totals() %>% 
+                                            mutate(Score = comma(Score, accuracy = 1, suffix = " points"),
+                                                   rowname = parse_number(rowname)) %>% 
+                                            mutate(Score_update = if_else(label == "Total", paste0("Infinity + ", Score), Score)) %>% 
+                                            select(-Score)
+                                           
+                                        a %>% 
+                                            mutate(Score = if_else(is.finite(Score), comma(Score, accuracy = 1, suffix = " points"), "Priceless"), 
+                                                   rowname = parse_number(rowname)) %>%
+                                            full_join(b) %>% 
+                                            mutate(Score = if_else(is.na(Score_update), Score, Score_update)) %>% 
+                                            select(-Score_update)
+                                        
+                                    }} %>%
+                                arrange(rowname) %>%
+                                rename_with(recode, "label" = .x, .cols = label) %>%
+                                select(-rowname)
+                        })),
+                
+                if (length(unique(AllInputs()$score_set)) > 1) {
+                    renderTable(width = "100%", {
+                        AllInputs() %>%
+                            ungroup() %>%
+                            select(-score_set) %>%
+                            adorn_totals() %>%
+                            mutate(
+                                Score = comma(Score, accuracy = 1, suffix = " points"),
+                                rowname = parse_number(rowname)
+                            ) %>%
+                            arrange(rowname) %>%
+                            rename_with(recode, "label" =  "Total", .cols = label) %>%
+                            mutate(Total = str_pad(Total, width = max(nchar(Total)), pad = " ")) %>%
+                            slice_tail(n = 1) %>%
+                            select(-rowname)
+                    })
+                })
+        
+        
+        
+        
+        
+        
     })
-    
+
     output$inventory <- renderUI({
         
         game_inventory <- Inventory %>% 
