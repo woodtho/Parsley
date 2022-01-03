@@ -5,22 +5,37 @@ library(readxl)
 
 Scores <- read_excel("Data/Scores.xlsx", sheet = "Score") %>% 
     mutate(label = if_else(level == 1, name, type) %>% 
-               str_to_title())
+               str_to_title()) %>% 
+    rownames_to_column()
 
 Inventory <- read_excel("Data/Scores.xlsx", sheet = "Inventory") 
 
-width_sidebar <- 3
+width_sidebar <- 4
 
 # Define UI for application that draws a histogram
 ui <- fluidPage(# Application title
-    titlePanel("Parsley Score", class = "container"),
+    titlePanel("Parsley Score"),
     
     tags$head(
         tags$link(rel = "stylesheet", type = "text/css", href = "css/bootstrap.min.css"),
         tags$link(rel = "stylesheet", type = "text/css", href = "css/bootstrap-grid.min.css"),
         tags$link(rel = "stylesheet", type = "text/css", href = "css/bootstrap-reboot.min.css"),
+        tags$link(rel = "stylesheet", type = "text/css", href = "css/custom.css"),
         tags$script(type = "text/javascript", href = "js/bootstrap.bundle.min.js"),
-        tags$script(type = "text/javascript", href = "js/bootstrap.min.js")
+        tags$script(type = "text/javascript", href = "js/bootstrap.min.js"),
+        tags$script(type = "text/javascript", href = "js/alert.js"),
+        tags$script(type = "text/javascript", href = "js/button.js"),
+        tags$script(type = "text/javascript", href = "js/carousel.js"),
+        tags$script(type = "text/javascript", href = "js/collapse.js"),
+        tags$script(type = "text/javascript", href = "js/dropdown.js"),
+        tags$script(type = "text/javascript", href = "js/index.js"),
+        tags$script(type = "text/javascript", href = "js/modal.js"),
+        tags$script(type = "text/javascript", href = "js/popover.js"),
+        tags$script(type = "text/javascript", href = "js/scrollspy.js"),
+        tags$script(type = "text/javascript", href = "js/tab.js"),
+        tags$script(type = "text/javascript", href = "js/toast.js"),
+        tags$script(type = "text/javascript", href = "js/tooltip.js"),
+        tags$script(type = "text/javascript", href = "js/util.js")
     ),
     
     # Sidebar with a slider input for number of bins
@@ -32,9 +47,10 @@ ui <- fluidPage(# Application title
                 "Select game:",
                 choices = unique(Scores$game),
                 multiple = FALSE),
-            h5(strong("Inventory")),
+            h4(strong("Inventory"), style = "color:black;"),
             uiOutput("inventory"),
-            h5(strong("Score Summary")),
+            br(),
+            h4(strong("Score Summary"), style = "color:black;"),
             tableOutput('show_inputs')),
         # Show a plot of the generated distribution
         mainPanel(uiOutput("score"))
@@ -61,14 +77,15 @@ server <- function(input, output) {
                 list(id = ., type = rep(.x, times = length(.)))
             
             tagList(column(
-                width = ceiling(length(unique(
-                    Scores$type
-                )) / (12 - width_sidebar) * 10),
-                h2(str_to_title(.x)),
+                width = 3,
+                #     floor(length(unique(
+                #     Scores$type
+                # )) / (11 - width_sidebar) * 10),
+                h1(str_to_title(.x)),
                 map(
                     ids$id,
                     .f = ~ checkboxInput(
-                        paste0("score_",str_replace_all(input$game, " ", "_"),"_", .x),
+                        paste0("score_",str_replace_all(input$game, " |-", "_"),"_", .x),
                         label = pull(score_items()[score_items()$id == .x, "name"]),
                         value = FALSE
                     )
@@ -84,12 +101,18 @@ server <- function(input, output) {
         x <- reactiveValuesToList(input)
         data.frame(names = names(x),
                    values = unlist(x, use.names = FALSE) %>% parse_logical()) %>% 
-            filter(str_detect(names, paste0("^score_", str_replace_all(input$game, " ", "_"), "_[0-9]"))) %>% 
+            filter(str_detect(names, paste0("^score_", str_replace_all(input$game, " |-", "_"), "_[0-9]"))) %>% 
             mutate(id = parse_number(names)) %>%
             left_join(Scores) %>%
             group_by(label) %>%
-            summarize(Score = sum(values * value, na.rm = TRUE)) %>%
-            adorn_totals()
+            summarize(Score = sum(values * value, na.rm = TRUE),
+                      rowname = max(rowname)) %>%
+            adorn_totals() %>% 
+            mutate(Score = scales::comma(Score, accuracy = 1, suffix = " points"),
+                   rowname = parse_number(rowname)) %>% 
+            arrange(rowname) %>% 
+            rename(` ` = label) %>% 
+            select(-rowname)
     })
     
     output$show_inputs <- renderTable({
