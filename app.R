@@ -5,8 +5,13 @@ library(readxl)
 
 Scores <- read_excel("Data/Scores.xlsx", sheet = "Score") %>% 
     mutate(label = if_else(level == 1, name, type) %>% 
-               str_to_title()) %>% 
-    rownames_to_column()
+               str_to_title() %>% 
+               fct_inorder()) %>% 
+    rownames_to_column() %>% 
+    group_by(game, type) %>% 
+    mutate(n = n(), 
+           game = fct_inorder(game)) %>% 
+    arrange(game,-n)
 
 Inventory <- read_excel("Data/Scores.xlsx", sheet = "Inventory") 
 
@@ -77,10 +82,10 @@ server <- function(input, output) {
                 list(id = ., type = rep(.x, times = length(.)))
             
             tagList(column(
-                width = 3,
+                width = 5,
                 #     floor(length(unique(
                 #     Scores$type
-                # )) / (11 - width_sidebar) * 10),
+                # )) / (11 - width_sidebar) * 11),
                 h1(str_to_title(.x)),
                 map(
                     ids$id,
@@ -132,8 +137,6 @@ server <- function(input, output) {
         
         fluidRow(column(6, inventory_inputs[c(TRUE, FALSE)]),
                  column(6, inventory_inputs[c(FALSE, TRUE)]))
-        
-    
             
     })
     
