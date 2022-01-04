@@ -155,3 +155,67 @@ input[type="checkbox"] {
     background: #555555;
     outline: 0;
 }
+
+
+body > div.container-fluid > div > div.col-sm-4 > form > div > div.form-group.shiny-input-container > div > div > div.focus.full.has-items.has-options.items.selectize-input{
+    font-weight: 400;
+    text-align: left;
+    font-kerning: none;
+    text-rendering: geometricPrecision;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: 20px;
+    -webkit-font-smoothing: inherit;
+    background: #ffffff;
+    border: 1px solid #cccccc;
+    padding: 6px 12px;
+    display: inline-block;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+    box-sizing: border-box;
+    border-radius: 0px;
+    min-height: 34px;
+    border-color: #000000;
+    outline: 0;
+    box-shadow: inset 0 0px 0px rgba(0,0,0,.075), 0 0 0px rgba(102, 175, 233, 0.6);
+    background-color: #bbbbbb!important;
+    color: black;
+    cursor: pointer;
+}
+
+body > div.container-fluid > div > div.col-sm-4 > form > div > div.form-group.shiny-input-container > div > div > div.full.has-items.has-options.items.selectize-input{
+    font-weight: 400;
+    text-align: left;
+    font-kerning: none;
+    text-rendering: geometricPrecision;
+    font-family: inherit;
+    font-size: inherit;
+    line-height: 20px;
+    -webkit-font-smoothing: inherit;
+    background: #ffffff;
+    border: 1px solid #cccccc;
+    padding: 6px 12px;
+    display: inline-block;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+    box-sizing: border-box;
+    border-radius: 0px;
+    min-height: 34px;
+    border-color: #000000;
+    outline: 0;
+    box-shadow: inset 0 0px 0px rgba(0,0,0,.075), 0 0 0px rgba(102, 175, 233, 0.6);
+    background-color: #bbbbbb!important;
+    color: black;
+    cursor: pointer;
+}
+
+
+body > div.container-fluid > div > div.col-sm-4 > form > div > div.form-group.shiny-input-container > div > div > div.selectize-dropdown.single.plugin-selectize-plugin-a11y{
+  
+  
+    border-radius: 0px;
+}
