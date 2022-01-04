@@ -148,13 +148,22 @@ input[type="checkbox"] {
     box-shadow: 10px 10px 0 #000000;
 }
 
-#inventory > button:hover{
+#inventory > input:hover{
 
     color: #ffffff;
     text-decoration: none;
     background: #555555;
     outline: 0;
 }
+
+#inventory > input:focus{
+
+    color: #ffffff;
+    text-decoration: none;
+    background: #555555;
+    outline: 0;
+}
+
 
 
 body > div.container-fluid > div > div.col-sm-4 > form > div > div.form-group.shiny-input-container > div > div > div.focus.full.has-items.has-options.items.selectize-input{
@@ -215,7 +224,46 @@ body > div.container-fluid > div > div.col-sm-4 > form > div > div.form-group.sh
 
 
 body > div.container-fluid > div > div.col-sm-4 > form > div > div.form-group.shiny-input-container > div > div > div.selectize-dropdown.single.plugin-selectize-plugin-a11y{
-  
-  
     border-radius: 0px;
 }
+
+
+#save_inputs{
+     font: 400 16px DOS!important;
+    padding: 11px 11px;
+    margin-bottom: 20px;
+    line-height: 20px;
+    color: #000084;
+    cursor: default;
+    border-radius: 0;
+}
+
+#save_inputs:hover{
+
+    color: #ffffff;
+    text-decoration: none;
+    background: #555555;
+    outline: 0;
+}
+
+
+body > div.container-fluid > h2 > span > span > label > span{
+    
+    font: 400 16px DOS!important;
+    padding: 11px 11px;
+    margin-bottom: 20px;
+    line-height: 20px;
+    color: #000084;
+    cursor: default;
+    border-radius: 0;
+}
+
+body > div.container-fluid > h2 > span > span > label > span:hover{
+
+    color: #ffffff;
+    text-decoration: none;
+    background: #555555;
+    outline: 0;
+}
+
+
