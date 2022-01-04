@@ -43,8 +43,7 @@ ui <- fluidPage(# Application title
         tags$script(type = "text/javascript", href = "js/scrollspy.js"),
         tags$script(type = "text/javascript", href = "js/tab.js"),
         tags$script(type = "text/javascript", href = "js/toast.js"),
-        tags$script(type = "text/javascript", href = "js/tooltip.js"),
-        tags$script(type = "text/javascript", href = "js/util.js")
+        tags$script(type = "text/javascript", href = "js/tooltip.js")
     ), 
     
     # Sidebar with a slider input for number of bins
@@ -63,9 +62,12 @@ ui <- fluidPage(# Application title
             h4("Inventory", style = "color:black;"),
             uiOutput("inventory"),
             br(),
-            h4("Score Summary", style = "color:black;"),
+            h4("Score Summary", style = "color:black; font"),
             div(style = "padding-right: 10px;",
-            uiOutput('show_inputs'))
+            uiOutput('show_inputs')
+            
+            
+            )
         )),
         mainPanel(div(style = "max-height: 780px; position:relative; overflow-y: scroll; padding-right: 10px;",
                       uiOutput("score")))
@@ -203,17 +205,55 @@ server <- function(input, output) {
 
     output$inventory <- renderUI({
         
-        game_inventory <- Inventory %>% 
+        game_inventory <- Inventory %>% #filter(game == "Adventure Castle")
             filter(game == input$game)
+            
+            map(unique(game_inventory$rules), function(.x){
+                    
+                inventory_inputs <-
+                    map(
+                        unique(game_inventory %>% filter(rules == .x) %>% pull(id)),
+                        ~ checkboxInput(
+                            paste0("inventory_", .x),
+                            label = pull(game_inventory[game_inventory$id == .x, "name"]),
+                            value = pull(game_inventory[game_inventory$id == .x, "start_with"])
+                        )
+                    )
+                
+                tagList(
+                    HTML(paste0(
+                        '<input type="button" data-toggle="collapse"  onclick="return change_',
+                        str_replace_all(.x, " |-", "_"),
+                        '(this);" data-target="#',
+                        paste0("collapse_", str_replace_all(.x, " |-", "_")),
+                        '" aria-expanded="true" aria-controls="',
+                        paste0("collapse_", str_replace_all(.x, " |-", "_")),
+                        '" value ="',
+                        .x,
+                        ' ▲"></input>'
+                    )
+                    ),  
+                    
+                    div(class="collapse in", id=paste0("collapse_", str_replace_all(.x, " |-", "_")),
+                        fluidRow(column(6, inventory_inputs[c(TRUE, FALSE)]),
+                                 column(6, inventory_inputs[c(FALSE, TRUE)]))),
+                    tags$script(type = "text/javascript", 
+                                href = "js/util.js"),
+                    tags$script(type = "text/javascript", 
+                    paste0('function change_',str_replace_all(.x, " |-", "_"),'( el ) {
+                            if ( el.value === "',.x,' ▲" )
+                                el.value = "',.x,' ▼";
+                            else
+                                el.value = "',.x,' ▲";
+                            }')
+                    )
+                
+                
+            )})
         
-        inventory_inputs <-  map(unique(game_inventory$id), 
-            ~checkboxInput(paste0("inventory_", .x),
-                           label = pull(game_inventory[game_inventory$id == .x, "name"]), 
-                           value = pull(game_inventory[game_inventory$id == .x, "start_with"]))
-            )
         
-        fluidRow(column(6, inventory_inputs[c(TRUE, FALSE)]),
-                 column(6, inventory_inputs[c(FALSE, TRUE)]))
+        
+        
             
     })
     

@@ -120,6 +120,38 @@ input[type="checkbox"] {
 
 .table > thead > tr > th:nth-child(2){
   
-  width: 100px;
+  width: 120px;
 }
 
+#inventory > input{
+         -webkit-text-size-adjust: 100%;
+    visibility: visible;
+    border-spacing: 0;
+    border-collapse: separate;
+    margin: 0;
+    -webkit-appearance: button;
+    font-weight: normal;
+    font-family: DOS, Monaco, Menlo, Consolas, "Courier New", monospace;
+    display: inline-block;
+    padding: 10px 10px;
+    margin-bottom: 20px;
+    font-size: 18px;
+    line-height: 20px;
+    color: #000000;
+    text-align: center;
+    vertical-align: middle;
+    cursor: default;
+    background: #fefe54;
+    border: 0;
+    border-width: 0;
+    border-radius: 0;
+    box-shadow: 10px 10px 0 #000000;
+}
+
+#inventory > button:hover{
+
+    color: #ffffff;
+    text-decoration: none;
+    background: #555555;
+    outline: 0;
+}
