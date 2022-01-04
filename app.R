@@ -87,7 +87,8 @@ width_sidebar <- 4
 ui <- fluidPage(# Application title
     titlePanel(tagList(
         span("Parsely Score", 
-             span(downloadButton('save_inputs', '< Save inputs >', icon = NULL),
+             span(
+                  downloadButton('save_inputs', '< Save inputs >', icon = NULL),
                   fileInputNoExtra('load_inputs', NULL, buttonLabel = '< Load inputs >', accept = ".parsely"),
                   style = "position:absolute;right:2em;")
         )
@@ -138,6 +139,8 @@ ui <- fluidPage(# Application title
                 choices = unique(Scores$game),
                 multiple = FALSE
             ),
+            htmlOutput("save_slot_counter"),
+            
             # Generated UI for the inventory
             h4("Inventory", style = "color:black;"),
             uiOutput("inventory"),
@@ -216,9 +219,33 @@ server <- function(input, output, session) {
             arrange(names)
     })
     
+    count_save_slots <- reactiveVal(0)
+    
+    observeEvent(input$game, {
+        
+        count_save_slots(0)
+    })
+    
+    output$save_slot_counter <- renderText({
+        
+        num <- if_else(count_save_slots() <= 3, count_save_slots(), 3)
+        colour <- if_else(count_save_slots() <3, "black", "red")
+        
+        blink <- case_when(count_save_slots() == 1 ~ "animation: blinkingText 2.0s infinite;",
+                           count_save_slots() == 2 ~ "animation: blinkingText 1.0s infinite;",
+                           TRUE ~ "animation: none;",)
+        
+        
+        paste0("<h5 style = 'margin-top: 14px;color:",colour, ";", blink," ' >Save slots: ",num, " </h5>" )
+    })
+    
+    
     output$save_inputs <- downloadHandler(
         filename = function() {
-            paste(input$game, ".parsely", sep="")
+            
+            count_save_slots(count_save_slots()+1)
+            
+            paste(input$game, "_save_", count_save_slots(), ".parsely", sep="")
         },
         content = function(file) {
             write.csv(all_inputs() %>% 
@@ -361,6 +388,8 @@ server <- function(input, output, session) {
         req(save_state())
         req(input$load_inputs != 1)
         
+        a <- count_save_slots()
+        
         updateSelectInput(session = session,
                           inputId = "game",
                           NULL,
@@ -376,8 +405,12 @@ server <- function(input, output, session) {
                                     parse_logical())
         }))
         
+        count_save_slots(a)
+        
         session$sendCustomMessage("load_inputs", 'null')
         session$sendCustomMessage("load_inputs", '1')
+        
+        
         
         })}
 

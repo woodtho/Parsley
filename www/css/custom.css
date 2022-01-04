@@ -247,6 +247,7 @@ body > div.container-fluid > div > div.col-sm-4 > form > div > div.form-group.sh
 }
 
 
+
 body > div.container-fluid > h2 > span > span > label > span{
     
     font: 400 16px DOS!important;
@@ -257,13 +258,3 @@ body > div.container-fluid > h2 > span > span > label > span{
     cursor: default;
     border-radius: 0;
 }
-
-body > div.container-fluid > h2 > span > span > label > span:hover{
-
-    color: #ffffff;
-    text-decoration: none;
-    background: #555555;
-    outline: 0;
-}
-
-
