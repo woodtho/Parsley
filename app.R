@@ -3,7 +3,6 @@ library(shiny)
 library(janitor)
 library(readxl)
 library(scales)
-library(shinyjs)
 
 fileInputNoExtra <-
     function(inputId,
@@ -89,15 +88,13 @@ ui <- fluidPage(# Application title
     titlePanel(tagList(
         span("Parsely Score", 
              span(downloadButton('save_inputs', '< Save inputs >', icon = NULL),
-                  fileInputNoExtra('load_inputs', NULL, buttonLabel = '< Load inputs >', accept = ".csv"),
+                  fileInputNoExtra('load_inputs', NULL, buttonLabel = '< Load inputs >', accept = ".parsely"),
                   style = "position:absolute;right:2em;")
         )
     ),
     windowTitle = "Parsely Score"
     ),
-    useShinyjs(),
     
-    # titlePanel(tagList("Parsely Score") ),
     # These the the different css and js dependencies for the DOS theme
     tags$head(
         tags$link(rel = "stylesheet", type = "text/css", href = "css/bootstrap.min.css"),
@@ -214,7 +211,6 @@ server <- function(input, output, session) {
     all_inputs <- reactive({
         x <- reactiveValuesToList(input)
         x$load_inputs <- NA
-        x[["shinyjs-resettable-load_inputs"]] <- NA
         tibble(names = names(x),
                    values = unlist(x, use.names = FALSE)) %>% 
             arrange(names)
@@ -222,7 +218,7 @@ server <- function(input, output, session) {
     
     output$save_inputs <- downloadHandler(
         filename = function() {
-            paste(input$game, ".csv", sep="")
+            paste(input$game, ".parsely", sep="")
         },
         content = function(file) {
             write.csv(all_inputs() %>% 
@@ -355,8 +351,8 @@ server <- function(input, output, session) {
         print(input$load_inputs)        
         ext <- tools::file_ext(input$load_inputs$name)
         switch(ext,
-               csv = read_csv(input$load_inputs$datapath),
-               validate("Invalid file; Please upload a .csv file")
+               parsely = read_csv(input$load_inputs$datapath),
+               validate("Invalid file; Please upload a .parsely file")
                )
     })
     
