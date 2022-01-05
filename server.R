@@ -4,8 +4,6 @@ library(janitor)
 library(readxl)
 library(scales)
 
-<<<<<<<< HEAD:server.R
-========
 
 
 # Load the score data.
@@ -105,7 +103,6 @@ ui <- fluidPage(# Application title
         mainPanel(div(style = "max-height: 780px; position:relative; overflow-y: scroll; padding-right: 10px;",
                       uiOutput("score")))
     ))
->>>>>>>> 1c4cdad169effeeb0eb4b1a49cf6fb9cbc47cf2d:app.R
 
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
