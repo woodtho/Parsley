@@ -4,6 +4,108 @@ library(janitor)
 library(readxl)
 library(scales)
 
+<<<<<<<< HEAD:server.R
+========
+
+
+# Load the score data.
+Scores <- read_excel("Data/Scores.xlsx", sheet = "Score") %>%
+    mutate(
+        # Create the labels used in the score summary
+        label = if_else(level == 1, name, type) %>%
+            str_to_title() %>%
+            fct_inorder(),
+        # Because the data is stored in excel, we need to parse the Inf as a
+        # numeric value. It defaults to making the var character
+        value = if_else(value == "Inf", Inf, parse_number(value))
+    ) %>%
+    rownames_to_column() %>%
+    group_by(game, type) %>%
+    # Used for sorting the score categories, so that the largest ones are drawn
+    # at the top.
+    mutate(n = n(),
+           game = fct_inorder(game)) %>%
+    arrange(game,-n)
+
+# Import the inventory data
+Inventory <- read_excel("Data/Scores.xlsx", sheet = "Inventory")
+
+width_sidebar <- 4
+
+# Define UI
+ui <- fluidPage(# Application title
+    titlePanel(tagList(
+        span("Parsely Score", 
+             span(
+                  downloadButton('save_inputs', '< Save inputs >', icon = NULL),
+                  fileInputNoExtra('load_inputs', NULL, buttonLabel = '< Load inputs >', accept = ".parsely"),
+                  style = "position:absolute;right:2em;")
+        )
+    ),
+    windowTitle = "Parsely Score"
+    ),
+    
+    # These the the different css and js dependencies for the DOS theme
+    tags$head(
+        tags$link(rel = "stylesheet", type = "text/css", href = "css/bootstrap.min.css"),
+        tags$link(rel = "stylesheet", type = "text/css", href = "css/bootstrap-grid.min.css"),
+        tags$link(rel = "stylesheet", type = "text/css", href = "css/bootstrap-reboot.min.css"),
+        tags$link(rel = "stylesheet", type = "text/css", href = "css/custom.css"),
+        tags$script(type = "text/javascript", href = "js/bootstrap.bundle.min.js"),
+        tags$script(type = "text/javascript", href = "js/bootstrap.min.js"),
+        tags$script(type = "text/javascript", href = "js/alert.js"),
+        tags$script(type = "text/javascript", href = "js/button.js"),
+        tags$script(type = "text/javascript", href = "js/carousel.js"),
+        tags$script(type = "text/javascript", href = "js/collapse.js"),
+        tags$script(type = "text/javascript", href = "js/dropdown.js"),
+        tags$script(type = "text/javascript", href = "js/index.js"),
+        tags$script(type = "text/javascript", href = "js/modal.js"),
+        tags$script(type = "text/javascript", href = "js/popover.js"),
+        tags$script(type = "text/javascript", href = "js/scrollspy.js"),
+        tags$script(type = "text/javascript", href = "js/tab.js"),
+        tags$script(type = "text/javascript", href = "js/toast.js"),
+        tags$script(type = "text/javascript", href = "js/tooltip.js"),
+        tags$script("
+        Shiny.addCustomMessageHandler('load_inputs', function(value) {
+        Shiny.setInputValue('load_inputs', value);
+        });
+  ")
+    ), 
+    
+    # Sidebar
+    sidebarLayout(
+        sidebarPanel(
+            width = width_sidebar, 
+            # Wrap the content in the sidebar in a div, so that we can scroll the
+            # content and set a max height.
+            div(
+            style = "max-height: 720px; position:relative; overflow-y: scroll; padding-right: 10px;",
+            h4("Select game", style = "color:black;"),
+            # select the game
+            selectInput(
+                "game",
+                NULL,
+                choices = unique(Scores$game),
+                multiple = FALSE
+            ),
+            htmlOutput("save_slot_counter"),
+            
+            # Generated UI for the inventory
+            h4("Inventory", style = "color:black;"),
+            uiOutput("inventory"),
+            br(),
+            # Generated score summary UI
+            h4("Score Summary", style = "color:black; font"),
+            # This padding is needed so the tables don't touch the scroll bar
+            div(style = "padding-right: 10px;",
+            uiOutput('show_inputs')
+            )
+        )),
+        # the extra div is for scroll control.
+        mainPanel(div(style = "max-height: 780px; position:relative; overflow-y: scroll; padding-right: 10px;",
+                      uiOutput("score")))
+    ))
+>>>>>>>> 1c4cdad169effeeb0eb4b1a49cf6fb9cbc47cf2d:app.R
 
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
