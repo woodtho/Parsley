@@ -4,158 +4,6 @@ library(janitor)
 library(readxl)
 library(scales)
 
-fileInputNoExtra <-
-    function(inputId,
-             label,
-             multiple = FALSE,
-             accept = NULL,
-             width = NULL,
-             buttonLabel = "Browse...",
-             placeholder = "No file selected") {
-        restoredValue <- restoreInput(id = inputId, default = NULL)
-        if (!is.null(restoredValue) && !is.data.frame(restoredValue)) {
-            warning("Restored value for ", inputId, " has incorrect format.")
-            restoredValue <- NULL
-        }
-        if (!is.null(restoredValue)) {
-            restoredValue <- toJSON(restoredValue, strict_atomic = FALSE)
-        }
-        inputTag <-
-            tags$input(
-                id = inputId,
-                name = inputId,
-                type = "file",
-                style = "display: none;",
-                `data-restore` = restoredValue
-            )
-        if (multiple)
-            inputTag$attribs$multiple <- "multiple"
-        if (length(accept) > 0)
-            inputTag$attribs$accept <- paste(accept, collapse = ",")
-        
-        tags$label(
-            class = "input-group-btn",
-            type = "button",
-            style = if (!is.null(width))
-                paste0(
-                    "width: ",
-                    validateCssUnit(width),
-                    ";",
-                    "padding-right: 0px; padding-bottom: 0px;  visible: hidden;"
-                ),
-            span(
-                class = "btn btn-default btn-file",
-                type = "button",
-                buttonLabel,
-                inputTag,
-                style = if (!is.null(width))
-                    paste0(
-                        "width: ",
-                        validateCssUnit(width),
-                        ";",
-                        "border-radius: 0px; padding-bottom: 5px;"
-                    )
-            )
-        )
-    }
-
-# Load the score data.
-Scores <- read_excel("Data/Scores.xlsx", sheet = "Score") %>%
-    mutate(
-        # Create the labels used in the score summary
-        label = if_else(level == 1, name, type) %>%
-            str_to_title() %>%
-            fct_inorder(),
-        # Because the data is stored in excel, we need to parse the Inf as a
-        # numeric value. It defaults to making the var character
-        value = if_else(value == "Inf", Inf, parse_number(value))
-    ) %>%
-    rownames_to_column() %>%
-    group_by(game, type) %>%
-    # Used for sorting the score categories, so that the largest ones are drawn
-    # at the top.
-    mutate(n = n(),
-           game = fct_inorder(game)) %>%
-    arrange(game,-n)
-
-# Import the inventory data
-Inventory <- read_excel("Data/Scores.xlsx", sheet = "Inventory")
-
-width_sidebar <- 4
-
-# Define UI
-ui <- fluidPage(# Application title
-    titlePanel(tagList(
-        span("Parsely Score", 
-             span(
-                  downloadButton('save_inputs', '< Save inputs >', icon = NULL),
-                  fileInputNoExtra('load_inputs', NULL, buttonLabel = '< Load inputs >', accept = ".parsely"),
-                  style = "position:absolute;right:2em;")
-        )
-    ),
-    windowTitle = "Parsely Score"
-    ),
-    
-    # These the the different css and js dependencies for the DOS theme
-    tags$head(
-        tags$link(rel = "stylesheet", type = "text/css", href = "css/bootstrap.min.css"),
-        tags$link(rel = "stylesheet", type = "text/css", href = "css/bootstrap-grid.min.css"),
-        tags$link(rel = "stylesheet", type = "text/css", href = "css/bootstrap-reboot.min.css"),
-        tags$link(rel = "stylesheet", type = "text/css", href = "css/custom.css"),
-        tags$script(type = "text/javascript", href = "js/bootstrap.bundle.min.js"),
-        tags$script(type = "text/javascript", href = "js/bootstrap.min.js"),
-        tags$script(type = "text/javascript", href = "js/alert.js"),
-        tags$script(type = "text/javascript", href = "js/button.js"),
-        tags$script(type = "text/javascript", href = "js/carousel.js"),
-        tags$script(type = "text/javascript", href = "js/collapse.js"),
-        tags$script(type = "text/javascript", href = "js/dropdown.js"),
-        tags$script(type = "text/javascript", href = "js/index.js"),
-        tags$script(type = "text/javascript", href = "js/modal.js"),
-        tags$script(type = "text/javascript", href = "js/popover.js"),
-        tags$script(type = "text/javascript", href = "js/scrollspy.js"),
-        tags$script(type = "text/javascript", href = "js/tab.js"),
-        tags$script(type = "text/javascript", href = "js/toast.js"),
-        tags$script(type = "text/javascript", href = "js/tooltip.js"),
-        tags$script("
-        Shiny.addCustomMessageHandler('load_inputs', function(value) {
-        Shiny.setInputValue('load_inputs', value);
-        });
-  ")
-    ), 
-    
-    # Sidebar
-    sidebarLayout(
-        sidebarPanel(
-            width = width_sidebar, 
-            # Wrap the content in the sidebar in a div, so that we can scroll the
-            # content and set a max height.
-            div(
-            style = "max-height: 720px; position:relative; overflow-y: scroll; padding-right: 10px;",
-            h4("Select game", style = "color:black;"),
-            # select the game
-            selectInput(
-                "game",
-                NULL,
-                choices = unique(Scores$game),
-                multiple = FALSE
-            ),
-            htmlOutput("save_slot_counter"),
-            
-            # Generated UI for the inventory
-            h4("Inventory", style = "color:black;"),
-            uiOutput("inventory"),
-            br(),
-            # Generated score summary UI
-            h4("Score Summary", style = "color:black; font"),
-            # This padding is needed so the tables don't touch the scroll bar
-            div(style = "padding-right: 10px;",
-            uiOutput('show_inputs')
-            )
-        )),
-        # the extra div is for scroll control.
-        mainPanel(div(style = "max-height: 780px; position:relative; overflow-y: scroll; padding-right: 10px;",
-                      uiOutput("score")))
-    ))
 
 # Define server logic required to draw a histogram
 server <- function(input, output, session) {
@@ -228,15 +76,38 @@ server <- function(input, output, session) {
     
     output$save_slot_counter <- renderText({
         
-        num <- if_else(count_save_slots() <= 3, count_save_slots(), 3)
-        colour <- if_else(count_save_slots() <3, "black", "red")
+        # num <- if_else(count_save_slots() <= 3, count_save_slots(), 3)
+        colour <- if_else(count_save_slots() <3, "black", "#DB143D")
+        num <-
+            paste(c(
+                rep(
+                    "<img style='vertical-align:middle;' src='../fonts/checkbox-checked-black.svg'></img>",
+                    times = if_else(count_save_slots() <= 3, count_save_slots(), 3)
+                ),
+                rep(
+                    "<img style='vertical-align:middle;' src='../fonts/checkbox-unchecked-black.svg'></img>",
+                    times = if_else(count_save_slots() <= 3, 3 - count_save_slots(), 0)
+                )
+            ),
+            collapse = " ")
         
-        blink <- case_when(count_save_slots() == 1 ~ "animation: blinkingText 2.0s infinite;",
-                           count_save_slots() == 2 ~ "animation: blinkingText 1.0s infinite;",
-                           TRUE ~ "animation: none;",)
+        if(colour == "#DB143D"){
+            num <- rep(red_checkbox_checked, times = 3) %>% 
+                paste(., collapse = " ")
+        }
         
+        paste0("
+        <div style='vertical-align:middle;
+        display:inline;
+        margin-top:14px;
+        margin-bottom: 14px;
+        color:",colour, ";"," '>
         
-        paste0("<h5 style = 'margin-top: 14px;color:",colour, ";", blink," ' >Save slots: ",num, " </h5>" )
+        Save slots: ", num, "
+        
+        </div>
+        
+        ")
     })
     
     
@@ -390,6 +261,12 @@ server <- function(input, output, session) {
         
         a <- count_save_slots()
         
+        if(a == 0){
+            a <- str_extract(input$load_inputs$name, "save_[0-9]") %>% parse_number()
+            
+            # 
+        }
+        
         updateSelectInput(session = session,
                           inputId = "game",
                           NULL,
@@ -413,6 +290,3 @@ server <- function(input, output, session) {
         
         
         })}
-
-# Run the application 
-shinyApp(ui = ui, server = server)
